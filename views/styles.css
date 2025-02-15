@@ -1,0 +1,98 @@
+/* styles.css */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            background-color: white;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 275px;
+            background-color: #1c88cf;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            padding: 20px 20px 40px 20px;
+        }
+        .sidebar-logo img {
+            width: 40px;
+            height: auto;
+            margin-right: 12px;
+        }
+        .sidebar-logo h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #0e385c;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            margin: 0;
+        }
+        .sidebar-menu li {
+            margin: 8px 0;
+        }
+        .sidebar-menu a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            padding: 12px 20px;
+            align-items: center;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+.menu-icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 12px;
+    object-fit: contain;
+}
+.content {
+    flex: 1;
+    padding: 20px;
+    background-color: #f4f6f9;
+}
+
+h1 {
+    color: #1c88cf;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.cards {
+    display: flex;
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 250px;
+    text-align: center;
+}
+
+.card h2 {
+    margin-bottom: 10px;
+    color: #1c88cf;
+}
+
+.card p {
+    color: #666;
+    font-size: 14px;
+}
