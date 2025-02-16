@@ -40,6 +40,11 @@ app.get('/nagarnetra', (req, res) => {
     return res.render('nagarnetra');
 });
 
+// Route for the maintenance page
+app.get('/maintenance', (req, res) => {
+  res.render('maintenance');
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
