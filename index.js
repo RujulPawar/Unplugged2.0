@@ -44,3 +44,11 @@ app.get('/nagarnetra', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// index.js
+// ... other code ...
+
+// Route for the maintenance page
+app.get('/maintenance', (req, res) => {
+  res.render('maintenance');
+});
