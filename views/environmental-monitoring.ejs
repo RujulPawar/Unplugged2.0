@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Monitoring</title>
+    <link rel="stylesheet" href="/views/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/logo.png" alt="NagarNetra Logo">
+            <h1>NagarNetra</h1>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/nagarnetra"><img src="/home.png" alt="Home Icon" class="menu-icon"><span>Home</span></a></li>
+            <li><a href="#"><img src="/traffic.png" alt="Traffic Icon" class="menu-icon"><span>Urban Traffic Management</span></a></li>
+            <li><a href="/environmental-monitoring"><img src="/environment.png" alt="Environment Icon" class="menu-icon"><span>Environmental Monitoring</span></a></li>
+            <li><a href="#"><img src="/safety.png" alt="Safety Icon" class="menu-icon"><span>Public Safety</span></a></li>
+            <li><a href="/maintenance"><img src="/maintenance.png" alt="Maintenance Icon" class="menu-icon"><span>System Maintenance</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Environmental Monitoring</h1>
+        <div class="cards-container">
+            <div class="card"><h2>AQI</h2><p>Air Quality Index Monitoring</p></div>
+            <div class="card"><h2>Weather</h2><p>Weather Trends & Forecast</p></div>
+            <div class="card"><h2>Waste</h2><p>AI-Based Waste Detection</p></div>
+            <div class="card" id="tempCard"><h2>Temporary</h2><p>Testing Temperature & Pressure</p></div>
+        </div>
+    </div>
+
+    <!-- Modal for sensor data -->
+    <div id="sensorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModal">&times;</span>
+            <h2>Sensor Readings</h2>
+            <div class="sensor-grid">
+                <div class="sensor-box">
+                    <h3>Temperature</h3>
+                    <div id="temperature" class="sensor-value">--</div>
+                    <div>Celsius</div>
+                </div>
+                <div class="sensor-box">
+                    <h3>Pressure</h3>
+                    <div id="pressure" class="sensor-value">--</div>
+                    <div>hPa</div>
+                </div>
+                <div class="sensor-box">
+                    <h3>Latitude</h3>
+                    <div id="latitude" class="sensor-value">--</div>
+                    <div>°N</div>
+                </div>
+                <div class="sensor-box">
+                    <h3>Longitude</h3>
+                    <div id="longitude" class="sensor-value">--</div>
+                    <div>°E</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket('ws://localhost:8080');
+        const modal = document.getElementById('sensorModal');
+        const tempCard = document.getElementById('tempCard');
+        const closeModal = document.getElementById('closeModal');
+
+        // WebSocket event handlers
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateSensorValue(data.topic, data.value);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        // Update sensor values
+        function updateSensorValue(topic, value) {
+            const sensorId = topic.split('/')[1];
+            const element = document.getElementById(sensorId);
+            if (element) {
+                // Format the value based on sensor type
+                let formattedValue = value;
+                if (sensorId === 'temperature') {
+                    formattedValue = parseFloat(value).toFixed(1) + '°C';
+                } else if (sensorId === 'pressure') {
+                    formattedValue = parseFloat(value).toFixed(1) + ' hPa';
+                } else if (sensorId === 'latitude' || sensorId === 'longitude') {
+                    formattedValue = parseFloat(value).toFixed(6) + '°';
+                }
+                element.textContent = formattedValue;
+            }
+        }
+
+        // Modal controls
+        tempCard.onclick = () => {
+            modal.style.display = 'block';
+        };
+
+        closeModal.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
