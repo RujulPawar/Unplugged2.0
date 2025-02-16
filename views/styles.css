@@ -96,3 +96,13 @@ h1 {
     color: #666;
     font-size: 14px;
 }
+
+    .stream-container {
+      max-width: 800px;
+      margin: 20px auto;
+    }
+    iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+    }
