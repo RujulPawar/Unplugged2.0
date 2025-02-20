@@ -1,12 +1,12 @@
-// index.js
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
 const WebSocket = require('ws');
 const mqtt = require('mqtt');
+const { fetchWeatherData, prepareWeatherDataForTemplate } = require('./weather');
 
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.urlencoded({ extended: false }));
@@ -16,10 +16,10 @@ app.use(express.static(__dirname));
 
 // Set view engine
 app.set('view engine', 'ejs');
-app.set("views", path.resolve("./views"));
+app.set('views', path.join(__dirname, 'views'));
 
 // Route for login page
-app.get('/', (req, res) => {
+app.get('/login', (req, res) => {
     return res.render("login", { errorMessage: null });
 });
 
@@ -34,7 +34,12 @@ app.post('/login', (req, res) => {
     if (email === mockUser.email && password === mockUser.password) {
         return res.redirect('/nagarnetra');
     }
-    res.render('login', { errorMessage: 'Invalid Email or Password' });
+    return res.render('login', { errorMessage: 'Invalid Email or Password' });
+});
+
+// Routes
+app.get('/', (req, res) => {
+    res.redirect('/nagarnetra');
 });
 
 // Route to render nagarnetra.ejs
@@ -46,51 +51,100 @@ app.get('/environmental-monitoring', (req, res) => {
     return res.render('environmental-monitoring');
 });
 
-// MQTT
-const options = {
-    host: process.env.MQTT_HOST,
-    port: parseInt(process.env.MQTT_PORT),
-    protocol: 'mqtts',
-    username: process.env.MQTT_USERNAME,
-    password: process.env.MQTT_PASSWORD
-};
+// Weather route with direct API integration
+app.get('/weather', async (req, res) => {
+    try {
+        // Fetch data from Python API
+        const weatherData = await fetchWeatherData();
 
-const client = mqtt.connect(options);
+        // Prepare data for the template
+        const templateData = prepareWeatherDataForTemplate(weatherData);
 
-// Initialize the WebSocket server
-const wss = new WebSocket.Server({ port: 8080 });
-
-// MQTT setup
-client.on('connect', function () {
-    console.log('Connected to MQTT broker');
-    client.subscribe('sensor/temperature');
-    client.subscribe('sensor/pressure');
-    client.subscribe('sensor/humidity');
-    client.subscribe('sensor/latitude');
-    client.subscribe('sensor/longitude');
-});
-
-client.on('message', function (topic, message) {
-    // Broadcast the message to all connected WebSocket clients
-    wss.clients.forEach((ws) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ topic, value: message.toString() }));
-        }
-    });
-});
-
-client.on('error', function (error) {
-    console.error('MQTT Error:', error);
+        // Render the weather page with data
+        res.render('weather', {
+            weather: templateData || {
+                current: { temperature: '--', humidity: '--', pressure: '--', prediction: '--' },
+                status: {},
+                forecast: [],
+                chart: { labels: [], tempData: [] }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering weather page:', error);
+        res.status(500).send('Error loading weather data');
+    }
 });
 
 // Route for the maintenance page
 app.get('/maintenance', (req, res) => {
-  res.render('maintenance');
+    res.render('maintenance');
 });
+
+// MQTT Setup
+const connectMQTT = () => {
+    const options = {
+        host: process.env.MQTT_HOST,
+        port: parseInt(process.env.MQTT_PORT),
+        protocol: 'mqtts',
+        username: process.env.MQTT_USERNAME,
+        password: process.env.MQTT_PASSWORD,
+        reconnectPeriod: 5000 // Reconnect every 5 seconds if connection is lost
+    };
+
+    const client = mqtt.connect(options);
+
+    // Initialize the WebSocket server
+    const wss = new WebSocket.Server({ port: 8080 });
+
+    client.on('connect', function () {
+        console.log('Connected to MQTT broker');
+        const topics = [
+            'sensor/temperature',
+            'sensor/pressure',
+            'sensor/humidity',
+            'sensor/latitude',
+            'sensor/longitude'
+        ];
+
+        topics.forEach(topic => client.subscribe(topic));
+    });
+
+    client.on('message', function (topic, message) {
+        wss.clients.forEach((ws) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ topic, value: message.toString() }));
+            }
+        });
+    });
+
+    client.on('error', function (error) {
+        console.error('MQTT Error:', error);
+    });
+
+    client.on('disconnect', function () {
+        console.log('Disconnected from MQTT broker');
+    });
+
+    return { client, wss };
+};
+
+// Start MQTT and WebSocket servers
+// Only start MQTT if environment variables are available
+if (process.env.MQTT_HOST && process.env.MQTT_USERNAME) {
+    const { client, wss } = connectMQTT();
+
+    // Handle process termination gracefully
+    process.on('SIGINT', () => {
+        console.log('Closing MQTT connection and WebSocket server');
+        if (client) client.end();
+        if (wss) wss.close();
+        process.exit(0);
+    });
+} else {
+    console.log('MQTT credentials not found. MQTT client not started.');
+}
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
 });
-
-//Testing Varun's FC
