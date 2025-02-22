@@ -4,6 +4,7 @@ const path = require('path');
 require('dotenv').config();
 const WebSocket = require('ws');
 const mqtt = require('mqtt');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = 8000;
@@ -66,6 +67,7 @@ client.on('connect', function () {
     client.subscribe('sensor/temperature');
     client.subscribe('sensor/pressure');
     client.subscribe('sensor/humidity');
+    client.subscribe('sensor/mq7');
     client.subscribe('sensor/latitude');
     client.subscribe('sensor/longitude');
 });
@@ -86,6 +88,79 @@ client.on('error', function (error) {
 // Route for the maintenance page
 app.get('/maintenance', (req, res) => {
   res.render('maintenance');
+});
+
+app.get('/aqi', (req, res) => {
+    res.render('aqi', {
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+    });
+});
+
+// Configure nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // or your preferred email service
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+    }
+});
+
+// Email templates based on AQI range
+const getEmailContent = (alertData) => {
+    const isPoor = alertData.aqi >= 101 && alertData.aqi <= 150;
+    const isUnhealthy = alertData.aqi > 150;
+
+    if (isPoor) {
+        return `
+            <h2>Air Quality Alert - Poor AQI (${alertData.aqi})</h2>
+            <p>Air quality is <strong>poor</strong>. Sensitive individuals may experience discomfort.</p>
+            <ul>
+                <li><strong>Outdoor exercise:</strong> Limit prolonged exposure.</li>
+                <li><strong>Skin & Health:</strong> Use oil-control products.</li>
+                <li><strong>Travel:</strong> Not ideal for long trips.</li>
+                <li><strong>Precaution:</strong> Wear a mask if needed, stay hydrated.</li>
+            </ul>
+        `;
+    } else if (isUnhealthy) {
+        return `
+            <h2>Air Quality Alert - Unhealthy AQI (${alertData.aqi})</h2>
+            <p>Air quality is <strong>unhealthy</strong>. Health effects possible for everyone, especially sensitive groups.</p>
+            <ul>
+                <li><strong>Outdoor activities:</strong> Avoid strenuous exercise.</li>
+                <li><strong>Windows & Purifier:</strong> Keep indoors clean.</li>
+                <li><strong>Skin & Health:</strong> Hydrate, use oil-free products.</li>
+                <li><strong>Precaution:</strong> Wear a mask, limit time outside.</li>
+            </ul>
+        `;
+    }
+};
+
+// Add this route to your Express app
+app.post('/send-alert-email', async (req, res) => {
+    try {
+        const alertData = req.body;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_RECIPIENT, // Configure recipient email
+            subject: `Air Quality Alert - ${alertData.airQuality} AQI (${alertData.aqi})`,
+            html: getEmailContent(alertData)
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'Alert email sent successfully' });
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ message: 'Failed to send alert email' });
+    }
+});
+
+app.get('/urbantrafficmanagement', (req, res) => {
+  res.render('urbantrafficmanage');
+});
+
+app.get('/publicsafety', (req, res) => {
+  res.render('publicsafety');
 });
 
 // Start server
