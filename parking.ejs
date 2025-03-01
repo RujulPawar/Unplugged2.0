@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NagarNetra - Smart Parking</title>
+    <link rel="stylesheet" href="/views/styles.css">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .main-content {
+            display: flex;
+            background-color: white;
+            overflow-y: hidden;
+            min-height: 100vh;
+            width: 100%;
+        }
+        .container {
+            padding: 20px;
+            text-align: center;
+            flex-grow: 1;
+        }
+        .sidebar {
+            width: 275px;
+            background-color: #1c88cf;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            padding: 20px 20px 40px 20px;
+        }
+        .sidebar-logo img {
+            width: 40px;
+            height: auto;
+            margin-right: 12px;
+        }
+        .sidebar-logo h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #0e385c;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            margin: 0;
+        }
+        .sidebar-menu li {
+            margin: 8px 0;
+        }
+        .sidebar-menu a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            padding: 12px 20px;
+            align-items: center;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-menu a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .parking-status {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .view-map-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .view-map-btn:hover {
+            background: #0056b3;
+        }
+
+        /* Map Card Styling */
+        .map-card {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 1000;
+        }
+        #map {
+            width: 100%;
+            height: 85%;
+            border-radius: 10px;
+        }
+        .close-map-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+        }
+        .close-map-btn:hover {
+            background: darkred;
+        }
+
+        /* Background Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Parking List */
+        .parking-list {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 10px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .parking-list h2 {
+            margin-bottom: 10px;
+        }
+        .parking-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .parking-list li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .parking-list li:hover {
+            background: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="NagarNetra Logo">
+                <h1>NagarNetra</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="/nagarnetra"><img src="/home.png" alt="Home Icon" class="menu-icon"><span>Home</span></a></li>
+                <li><a href="/urbantrafficmanagement"><img src="/traffic.png" alt="Traffic Icon" class="menu-icon"><span>Urban Traffic Management</span></a></li>
+                <li><a href="/environmental-monitoring"><img src="/environment.png" alt="Environment Icon" class="menu-icon"><span>Environmental Monitoring</span></a></li>
+                <li><a href="/publicsafety"><img src="/safety.png" alt="Safety Icon" class="menu-icon"><span>Public Safety</span></a></li>
+                <li><a href="/maintenance"><img src="/maintenance.png" alt="Maintenance Icon" class="menu-icon"><span>System Maintenance</span></a></li>
+            </ul>
+        </div>
+
+        <div class="container">
+            <h1>Smart Parking System</h1>
+            <div class="parking-status">
+                <div>
+                    <h3>Parking Slot</h3>
+                    <p>Status: <span class="status">Loading...</span></p>
+                </div>
+                <button class="view-map-btn" onclick="openMap()">View on Map</button>
+            </div>
+
+            <!-- Nearby Parking Spots -->
+            <div class="parking-list">
+                <h2>Nearby Parking Spots</h2>
+                <ul id="parking-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay & Map Popup -->
+    <div class="overlay" id="overlay" onclick="closeMap()"></div>
+    <div class="map-card" id="map-card">
+        <button class="close-map-btn" onclick="closeMap()">✖</button>
+        <h2>Parking Location</h2>
+        <div id="map"></div>
+    </div>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqE0-OvYjQhshX1cpwfrptTGz8MUF9BKY&callback=initMap" async defer></script>
+    <script src="parkingscript.js"></script>
+</body>
+</html>

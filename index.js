@@ -24,6 +24,12 @@ app.get('/', (req, res) => {
     return res.render("login", { errorMessage: null });
 });
 
+
+let parkingSpots = [
+    { latitude: 28.7041, longitude: 77.1025, status: "Available" },
+    { latitude: 28.7055, longitude: 77.1030, status: "Occupied" }
+];
+
 // Route to handle login submission
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
@@ -70,6 +76,8 @@ client.on('connect', function () {
     client.subscribe('sensor/mq7');
     client.subscribe('sensor/latitude');
     client.subscribe('sensor/longitude');
+    client.subscribe('parking/sensor1');
+    client.subscribe('parking/sensor2');
 });
 
 client.on('message', function (topic, message) {
@@ -162,6 +170,11 @@ app.get('/urbantrafficmanagement', (req, res) => {
 app.get('/publicsafety', (req, res) => {
   res.render('publicsafety');
 });
+
+app.get("/api/parking", (req, res) => {
+    res.json({ availableSlots: Math.floor(Math.random() * 20) + 1 }); // Replace with MQTT or DB data
+});
+
 
 // Start server
 app.listen(PORT, () => {
