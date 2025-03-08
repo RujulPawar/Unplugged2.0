@@ -7,6 +7,84 @@
     <link rel="icon" href="/logo.png" type="image/png">
     <link rel="stylesheet" href="/views/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Full-screen styled homepage */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            background-image: url('/public/bg.jpg'); /* Background image */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            position: relative;
+        }
+
+        /* Updated Title Styling - Higher Position + Animation */
+        .main-content h1 {
+            font-size: 50px;
+            font-weight: bold;
+            color: #0E385C; /* Bright cyan for modern contrast */
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            position: absolute;
+            top: 5%; /* Moves the title even higher */
+            animation: fadeIn 1.5s ease-in-out; /* Now animated */
+        }
+
+        /* Larger Introductory Text - White Box */
+        .intro-text {
+            font-size: 30px; /* Increased size */
+            font-weight: bold;
+            max-width: 75%;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 60px; /* Adjusted to align with new title position */
+            animation: slideUp 1.5s ease-in-out;
+            color: #0e385c; /* Deep blue for contrast */
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+            line-height: 1.5;
+        }
+
+        /* Team Tech Titans Button */
+        .team-btn {
+            margin-top: 30px;
+            padding: 18px 35px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            background: #1c88cf; /* Themed blue */
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .team-btn:hover {
+            background: #0e385c; /* Darker blue on hover */
+            transform: scale(1.07);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
     <div class="sidebar">
@@ -17,13 +95,19 @@
         <ul class="sidebar-menu">
             <li><a href="/nagarnetra"><img src="/home.png" alt="Home Icon" class="menu-icon"><span>Home</span></a></li>
             <li><a href="/urbantrafficmanagement"><img src="/traffic.png" alt="Traffic Icon" class="menu-icon"><span>Urban Traffic Management</span></a></li>
-            <li><a href="/environmental-monitoring"><img src="/environment.png" alt="Environment Icon" class="menu-icon"><span>Environmental Monitoring</span></a></li>
+            <li><a href="/environmentalmonitoring"><img src="/environment.png" alt="Environment Icon" class="menu-icon"><span>Environmental Monitoring</span></a></li>
             <li><a href="/publicsafety"><img src="/safety.png" alt="Safety Icon" class="menu-icon"><span>Public Safety</span></a></li>
             <li><a href="/maintenance"><img src="/maintenance.png" alt="Maintenance Icon" class="menu-icon"><span>System Maintenance</span></a></li>
         </ul>
     </div>
+
     <div class="main-content">
-        <h1>Home</h1>
+        <h1>Welcome to NagarNetra</h1>
+        <p class="intro-text">
+            NagarNetra is an integrated IoT-powered Smart City platform designed to enhance urban traffic management,
+            environmental monitoring, and public safety. We aim to make cities safer, smarter, and more efficient.
+        </p>
+        <a href="/nagarnetra" class="team-btn">Team Tech Titans</a>
     </div>
 </body>
 </html>

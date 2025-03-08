@@ -83,13 +83,12 @@ btn.onclick = function() {
 // Add this function near your other calculation functions
 function calculateVisibility() {
     if (temperature !== null && humidity !== null && pressure !== null && carbonMonoxide !== null) {
-        // CO is already in ppb, directly use it (800 ppb = 800)
-        const vis = 20 - (0.05 * humidity) -
-                    (0.01 * carbonMonoxide) +
-                    (0.02 * (pressure - 1010)) -
-                    (0.03 * Math.abs(temperature - 25));
+        let vis = 20 - (0.04 * humidity) -
+                      (0.005 * carbonMonoxide) +
+                      (0.02 * (pressure - 1010)) -
+                      (0.02 * Math.abs(temperature - 25));
 
-        return parseFloat(vis.toFixed(2));
+        return parseFloat(Math.max(vis, 0.5).toFixed(2)); // Minimum 0.5 km
     }
     return null;
 }
