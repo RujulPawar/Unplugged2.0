@@ -185,11 +185,17 @@
 
         <div class="container">
             <h1>Smart Parking System</h1>
-            <div class="parking-status">
+            <div class="parking-status" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                 <div>
-                    <h3>Parking Slot</h3>
-                    <p>Status: <span class="status">Loading...</span></p>
+                    <h3>Parking Slot 1</h3>
+                    <p>Status: <span id="slot1-status">Loading...</span></p>
                 </div>
+            
+                <div>
+                    <h3>Parking Slot 2</h3>
+                    <p>Status: <span id="slot2-status">Loading...</span></p>
+                </div>
+            
                 <button class="view-map-btn" onclick="openMap()">View on Map</button>
             </div>
 
@@ -202,15 +208,17 @@
     </div>
 
     <!-- Overlay & Map Popup -->
-    <div class="overlay" id="overlay" onclick="closeMap()"></div>
-    <div class="map-card" id="map-card">
-        <button class="close-map-btn" onclick="closeMap()">✖</button>
-        <h2>Parking Location</h2>
-        <div id="map"></div>
+    <div class="overlay" id="overlay" onclick="closeParkingCard()"></div>
+     <div class="map-card" id="parking-card">
+     <button class="close-map-btn" onclick="closeParkingCard()">✖</button>
+      <h2 id="parking-title">Parking Details</h2>
+      <p id="parking-occupancy"></p>
+      <div id="parking-slots" style="text-align: left; padding: 10px;"></div>
+       <button class="view-map-btn" onclick="navigateToParking()">Navigate</button>
     </div>
 
     <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
-    <script src="parkingscript.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqE0-OvYjQhshX1cpwfrptTGz8MUF9BKY&callback=initMap"></script>
+    <script src="/parkingscript.js"></script>
 </body>
 </html>

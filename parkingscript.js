@@ -4,7 +4,15 @@ let directionsRenderer;
 let userLocation = { lat: 19.236158823957446, lng: 72.84104464787482 };
 
 function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
+    let mapElement = document.getElementById("map");
+
+    if (!mapElement) {
+        console.error("Error: #map element not found!");
+        return;
+    }
+
+    // Initialize the map
+    map = new google.maps.Map(mapElement, {
         center: userLocation,
         zoom: 15,
     });
@@ -26,12 +34,14 @@ function initMap() {
     ];
 
     const parkingList = document.getElementById("parking-list");
-    parkingList.innerHTML = "";
+    if (parkingList) {
+        parkingList.innerHTML = "";
+    }
 
     parkingSpots.forEach((spot) => {
-        let occupancy = Math.floor(Math.random() * 100); // Random occupancy %
+        let occupancy = Math.floor(Math.random() * 100);
 
-        // Adding markers to the map
+        // Add marker
         const marker = new google.maps.Marker({
             position: { lat: spot.lat, lng: spot.lng },
             map: map,
@@ -39,7 +49,7 @@ function initMap() {
             icon: spot.real ? "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" : null
         });
 
-        // Info window when marker is clicked
+        // Info window
         const infoWindow = new google.maps.InfoWindow({
             content: `<strong>${spot.name}</strong><br>Occupancy: ${occupancy}%`
         });
@@ -49,36 +59,32 @@ function initMap() {
             getDirections(spot);
         });
 
-        // Adding parking spots to list
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>${spot.name}</strong> - Occupancy: ${occupancy}%`;
-        li.addEventListener("click", () => getDirections(spot));
-        parkingList.appendChild(li);
+        // Add to parking list
+        if (parkingList) {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${spot.name}</strong> - Occupancy: ${occupancy}%`;
+            li.addEventListener("click", () => getDirections(spot));
+            parkingList.appendChild(li);
+        }
     });
+}
 
-    function getDirections(destination) {
-        directionsService.route({
-            origin: userLocation,
-            destination: { lat: destination.lat, lng: destination.lng },
-            travelMode: google.maps.TravelMode.DRIVING
-        }, (response, status) => {
-            if (status === "OK") {
-                directionsRenderer.setDirections(response);
-            } else {
-                alert("Directions request failed due to " + status);
-            }
-        });
+// Function to get directions
+function getDirections(destination) {
+    if (!directionsService || !directionsRenderer) {
+        console.error("Google Maps Directions services not initialized.");
+        return;
     }
-}
 
-// ✅ Fix for "View on Map" Button
-function openMap() {
-    document.getElementById("map-card").style.display = "block";
-    document.getElementById("overlay").style.display = "block";
-}
-
-// ✅ Fix for "Close Map" Button
-function closeMap() {
-    document.getElementById("map-card").style.display = "none";
-    document.getElementById("overlay").style.display = "none";
+    directionsService.route({
+        origin: userLocation,
+        destination: { lat: destination.lat, lng: destination.lng },
+        travelMode: google.maps.TravelMode.DRIVING
+    }, (response, status) => {
+        if (status === "OK") {
+            directionsRenderer.setDirections(response);
+        } else {
+            alert("Directions request failed due to " + status);
+        }
+    });
 }

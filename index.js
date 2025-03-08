@@ -171,10 +171,9 @@ app.get('/publicsafety', (req, res) => {
   res.render('publicsafety');
 });
 
-app.get("/api/parking", (req, res) => {
-    res.json({ availableSlots: Math.floor(Math.random() * 20) + 1 }); // Replace with MQTT or DB data
+app.get('/parking', (req, res) => {
+    res.render('parking');
 });
-
 
 // Start server
 app.listen(PORT, () => {

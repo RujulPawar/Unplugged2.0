@@ -1,28 +1,33 @@
-// WebSocket connection
-const ws = new WebSocket('ws://localhost:8080');
+document.addEventListener("DOMContentLoaded", () => {
+    // Select AQI Card
+    const aqiCard = document.getElementById("aqiCard");
 
-// Elements
-const aqiCard = document.getElementById('aqiCard');
+    if (aqiCard) {
+        aqiCard.onclick = () => {
+            window.location.href = "/aqi";
+        };
+    }
 
-// WebSocket event handlers
-ws.onopen = () => {
-    console.log('Connected to WebSocket server');
-};
+    const parkingCard = document.getElementById("parkingCard");
 
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    updateSensorValue(data.topic, data.value);
-};
+    if (parkingCard) {
+        parkingCard.onclick = () => {
+            window.location.href = "/parking";
+        };
+    }
+    // WebSocket connection
+    const ws = new WebSocket("ws://localhost:8080");
 
-ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
+    ws.onopen = () => {
+        console.log("Connected to WebSocket server");
+    };
 
-// Redirect to AQI page when AQI card is clicked
-aqiCard.onclick = () => {
-    window.location.href = '/aqi';
-};
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        updateSensorValue(data.topic, data.value);
+    };
 
-parkingCard.onclick = () => {
-    window.location.href = '/parking';
-};
+    ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+});
