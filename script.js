@@ -1,28 +1,58 @@
-// WebSocket connection
-const ws = new WebSocket('ws://localhost:8080');
+document.addEventListener("DOMContentLoaded", () => {
+    // Select AQI Card
+    const aqiCard = document.getElementById("aqiCard");
+    const surveillanceCard = document.getElementById("surveillanceCard");
+    const signalsCard = document.getElementById("signalsCard");
+    const lanesCard = document.getElementById("lanesCard");
+    const parkingCard = document.getElementById("parkingCard");
+    const wasteAlertCard = document.getElementById("wasteAlertCard");
 
-// Elements
-const aqiCard = document.getElementById('aqiCard');
+    if (aqiCard) {
+        aqiCard.onclick = () => {
+            window.location.href = "/aqi";
+        };
+    }
+    if (surveillanceCard) {
+        surveillanceCard.onclick = () => {
+            window.location.href = "/surveillance";
+        };
+    }
+    if (signalsCard) {
+        signalsCard.onclick = () => {
+            window.location.href = "/adaptivetraffic";
+        };
+    }
+    if (lanesCard) {
+        lanesCard.onclick = () => {
+            window.location.href = "/dynamiclane";
+        };
+    }
 
-// WebSocket event handlers
-ws.onopen = () => {
-    console.log('Connected to WebSocket server');
-};
+    if (parkingCard) {
+        parkingCard.onclick = () => {
+            window.location.href = "/smartparking";
+        };
+    }
 
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    updateSensorValue(data.topic, data.value);
-};
+    if (wasteAlertCard) {
+        wasteAlertCard.onclick = () => {
+            window.location.href = "/wastealert";
+        };
+    }
 
-ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
+    // WebSocket connection
+    const ws = new WebSocket("ws://localhost:8080");
 
-// Redirect to AQI page when AQI card is clicked
-aqiCard.onclick = () => {
-    window.location.href = '/aqi';
-};
+    ws.onopen = () => {
+        console.log("Connected to WebSocket server");
+    };
 
-parkingCard.onclick = () => {
-    window.location.href = '/parking';
-};
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        updateSensorValue(data.topic, data.value);
+    };
+
+    ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+});

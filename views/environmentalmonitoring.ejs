@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Monitoring</title>
+    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="stylesheet" href="/views/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+    .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            width: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-modal {
+            font-size: 24px;
+            cursor: pointer;
+            color: grey;
+        }
+
+        /* Horizontal Button Styling */
+        .modal-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .modal-options button {
+            white-space: nowrap;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background: #1c88cf;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+
+        .modal-options button:hover {
+            background: #0e385c;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/logo.png" alt="NagarNetra Logo">
+            <h1>NagarNetra</h1>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/nagarnetra"><img src="/home.png" alt="Home Icon" class="menu-icon"><span>Home</span></a></li>
+            <li><a href="/urbantrafficmanagement"><img src="/traffic.png" alt="Traffic Icon" class="menu-icon"><span>Urban Traffic Management</span></a></li>
+            <li><a href="/environmentalmonitoring"><img src="/environment.png" alt="Environment Icon" class="menu-icon"><span>Environmental Monitoring</span></a></li>
+            <li><a href="/publicsafety"><img src="/safety.png" alt="Safety Icon" class="menu-icon"><span>Public Safety</span></a></li>
+            <li><a href="/maintenance"><img src="/maintenance.png" alt="Maintenance Icon" class="menu-icon"><span>System Maintenance</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Environmental Monitoring</h1>
+        <div class="cards-container">
+            <div class="card" id="weatherPodCard">
+                <h2>WeatherPod</h2>
+                <p>AQI, Weather, Wind & Rain Monitoring</p>
+            </div>
+            <div class="card" id="wasteAlertCard">
+                <h2>Waste Alert</h2>
+                <p>AI-Powered Public Waste Detection</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="weatherModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>WeatherPod</h2>
+                <span class="close-modal" id="closeWeatherModal">&times;</span>
+            </div>
+            <div class="modal-options">
+                <button onclick="navigateTo('/aqi')">AQI Monitoring</button>
+                <button onclick="navigateTo('/weatherprediction')">Weather Prediction</button>
+                <button onclick="navigateTo('/windandrain')">Wind & Rain Monitoring</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to open modal
+        function openModal() {
+            document.getElementById("weatherModal").style.display = "flex";
+        }
+
+        // Function to close modal
+        function closeModal() {
+            document.getElementById("weatherModal").style.display = "none";
+            history.replaceState(null, "", window.location.pathname); // Remove modal parameter
+        }
+
+        // Function to navigate with modal state
+        function navigateTo(url) {
+            window.location.href = url + "?modal=weather"; // Add modal parameter
+        }
+
+        // Function to check if modal should stay open
+        function checkModalState() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("modal") === "weather") {
+                openModal();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById("weatherPodCard").addEventListener("click", () => {
+            openModal();
+            history.pushState(null, "", "?modal=weather"); // Add modal parameter to URL
+        });
+
+        document.getElementById("closeWeatherModal").addEventListener("click", closeModal);
+
+        // Run on page load
+        checkModalState();
+
+        // Handle back button (for smooth navigation)
+        window.addEventListener("popstate", checkModalState);
+    </script>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
