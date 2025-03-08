@@ -16,6 +16,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+const axios = require('axios');
+
+// Configuration for waste detection
+const ESP32_URL = 'http://192.168.48.220/cam-mid.jpg';
+const ROBOFLOW_API_KEY = '4NzPrB85FF3PIWa8h7SP';
+const ROBOFLOW_MODEL = 'garbage_best/1';
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set("views", path.resolve("./views"));
@@ -170,6 +179,30 @@ app.get('/windandrain', (req, res) => {
     return res.render('windandrain');
 });
 
+app.get('/test-camera', async (req, res) => {
+    try {
+        const imageBuffer = await getESP32Image();
+        if (imageBuffer) {
+            return res.json({ 
+                success: true, 
+                message: 'Camera connection successful',
+                imageSize: imageBuffer.length
+            });
+        } else {
+            return res.json({ 
+                success: false, 
+                error: 'Failed to get image from camera'
+            });
+        }
+    } catch (error) {
+        console.error('Camera test error:', error);
+        return res.json({ 
+            success: false, 
+            error: error.message || 'Unknown error'
+        });
+    }
+});
+
 // API routes
 app.post('/send-alert-email', async (req, res) => {
     try {
@@ -190,7 +223,94 @@ app.post('/send-alert-email', async (req, res) => {
     }
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Function to fetch image from ESP32
+async function getESP32Image() {
+    try {
+        console.log('Fetching image from ESP32 at:', ESP32_URL);
+        const response = await axios.get(ESP32_URL, {
+            responseType: 'arraybuffer',
+            timeout: 5000 // 5 second timeout
+        });
+        console.log('ESP32 image received, size:', response.data.length);
+        return Buffer.from(response.data);
+    } catch (error) {
+        console.error('Error fetching ESP32 image:', 
+            error.response ? `Status: ${error.response.status}` : error.message);
+        return null;
+    }
+}
+
+// Function to perform waste detection using Roboflow API
+async function detectWaste(imageBuffer) {
+    try {
+        const base64Image = imageBuffer.toString('base64');
+        
+        const response = await axios({
+            method: "POST",
+            url: `https://detect.roboflow.com/${ROBOFLOW_MODEL}`,
+            params: {
+                api_key: ROBOFLOW_API_KEY
+            },
+            data: base64Image,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Roboflow API error:', error.message);
+        return null;
+    }
+}
+
+// Socket.IO connection handling
+// Add this to your server code
+io.on('connection', (socket) => {
+    console.log('Client connected to waste detection');
+    let detectionInterval;
+
+    socket.on('startDetection', () => {
+        console.log('Starting detection');
+        detectionInterval = setInterval(async () => {
+            try {
+                const imageBuffer = await getESP32Image();
+                if (imageBuffer) {
+                    const detectionResults = await detectWaste(imageBuffer);
+                    
+                    // Log detection results
+                    if (detectionResults && detectionResults.predictions) {
+                        console.log(`Found ${detectionResults.predictions.length} objects`);
+                    }
+
+                    socket.emit('frame', {
+                        image: imageBuffer.toString('base64'),
+                        detections: detectionResults ? detectionResults.predictions : []
+                    });
+                }
+            } catch (error) {
+                console.error('Detection loop error:', error);
+                socket.emit('error', { message: error.message });
+            }
+        }, 1000);
+    });
+
+    socket.on('stopDetection', () => {
+        console.log('Stopping detection');
+        if (detectionInterval) {
+            clearInterval(detectionInterval);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (detectionInterval) {
+            clearInterval(detectionInterval);
+        }
+        console.log('Client disconnected from waste detection');
+    });
 });
+
+// Start server
+http.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+}); 
