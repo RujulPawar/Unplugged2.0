@@ -1,10 +1,34 @@
-// index.js
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
 const WebSocket = require('ws');
 const mqtt = require('mqtt');
 const nodemailer = require('nodemailer');
+const admin = require('firebase-admin');
+const session = require('express-session');
+const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = require('firebase/auth');
+const { initializeApp } = require('firebase/app');
+
+// Firebase Admin SDK Initialization (For Server-side Authentication)
+const serviceAccount = require('./smartcity-1.json'); // Firebase service account key
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+// Firebase Client SDK (For User Authentication)
+const firebaseConfig = {
+    apiKey: "AIzaSyB8XtUwmoQf-PBvUE8UWry4-posX9KZM1A",
+    authDomain: "smartcity-1.firebaseapp.com",
+    projectId: "smartcity-1",
+    storageBucket: "smartcity-1.firebasestorage.app",
+    messagingSenderId: "121826649542",
+    appId: "1:121826649542:web:33c819c4f96df4a7287ec7",
+    measurementId: "G-6GYKQE5KRR"
+  };
+  
+
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
 
 // Initialize Express app
 const app = express();
@@ -16,179 +40,84 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
+// Session setup
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }  // Set to true if using HTTPS
+}));
+
 // Set view engine
 app.set('view engine', 'ejs');
 app.set("views", path.resolve("./views"));
 
-// Email configuration
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // or your preferred email service
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD
-    }
-});
-
-// Email templates based on AQI range
-const getEmailContent = (alertData) => {
-    const isPoor = alertData.aqi >= 101 && alertData.aqi <= 150;
-    const isUnhealthy = alertData.aqi > 150;
-
-    if (isPoor) {
-        return `
-            <h2>Air Quality Alert - Poor AQI (${alertData.aqi})</h2>
-            <p>Air quality is <strong>poor</strong>. Sensitive individuals may experience discomfort.</p>
-            <ul>
-                <li><strong>Outdoor exercise:</strong> Limit prolonged exposure.</li>
-                <li><strong>Skin & Health:</strong> Use oil-control products.</li>
-                <li><strong>Travel:</strong> Not ideal for long trips.</li>
-                <li><strong>Precaution:</strong> Wear a mask if needed, stay hydrated.</li>
-            </ul>
-        `;
-    } else if (isUnhealthy) {
-        return `
-            <h2>Air Quality Alert - Unhealthy AQI (${alertData.aqi})</h2>
-            <p>Air quality is <strong>unhealthy</strong>. Health effects possible for everyone, especially sensitive groups.</p>
-            <ul>
-                <li><strong>Outdoor activities:</strong> Avoid strenuous exercise.</li>
-                <li><strong>Windows & Purifier:</strong> Keep indoors clean.</li>
-                <li><strong>Skin & Health:</strong> Hydrate, use oil-free products.</li>
-                <li><strong>Precaution:</strong> Wear a mask, limit time outside.</li>
-            </ul>
-        `;
-    }
-};
-
-// MQTT Configuration
-const options = {
-    host: process.env.MQTT_HOST,
-    port: parseInt(process.env.MQTT_PORT),
-    protocol: 'mqtts',
-    username: process.env.MQTT_USERNAME,
-    password: process.env.MQTT_PASSWORD
-};
-
-const client = mqtt.connect(options);
-
-// Initialize the WebSocket server
-const wss = new WebSocket.Server({ port: 8080 });
-
-// MQTT event handlers
-client.on('connect', function () {
-    console.log('Connected to MQTT broker');
-    client.subscribe('sensor/temperature');
-    client.subscribe('sensor/pressure');
-    client.subscribe('sensor/humidity');
-    client.subscribe('sensor/mq7');
-    client.subscribe('sensor/latitude');
-    client.subscribe('sensor/longitude');
-});
-
-client.on('message', function (topic, message) {
-    // Broadcast the message to all connected WebSocket clients
-    wss.clients.forEach((ws) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ topic, value: message.toString() }));
-        }
-    });
-});
-
-client.on('error', function (error) {
-    console.error('MQTT Error:', error);
-});
-
-// Authentication routes
+// Authentication Routes
 app.get('/', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/nagarnetra');
+    }
     return res.render("login", { errorMessage: null });
 });
 
-app.post('/login', (req, res) => {
-    const { email, password } = req.body;
-    const mockUser = {
-        email: 'admin@gmail.com',
-        password: 'Test@1234'
-    };
-
-    if (email === mockUser.email && password === mockUser.password) {
+app.get('/register', (req, res) => {
+    if (req.session.user) {
         return res.redirect('/nagarnetra');
     }
-    res.render('login', { errorMessage: 'Invalid Email or Password' });
+    return res.render("register", { errorMessage: null });
 });
 
-// Main application routes
-app.get('/nagarnetra', (req, res) => {
-    return res.render('nagarnetra');
-});
+app.post('/register', async (req, res) => {
+    const { email, password } = req.body;
 
-app.get('/environmentalmonitoring', (req, res) => {
-    return res.render('environmentalmonitoring');
-});
-
-app.get('/maintenance', (req, res) => {
-    res.render('maintenance');
-});
-
-app.get('/aqi', (req, res) => {
-    res.render('aqi', {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
-    });
-});
-
-app.get('/urbantrafficmanagement', (req, res) => {
-    res.render('urbantrafficmanagement');
-});
-
-app.get('/publicsafety', (req, res) => {
-    res.render('publicsafety');
-});
-
-app.get('/surveillance', (req, res) => {
-    return res.render('surveillance');
-});
-
-app.get('/adaptivetraffic', (req, res) => {
-    return res.render('adaptivetraffic');
-});
-
-app.get('/dynamiclane', (req, res) => {
-    return res.render('dynamiclane');
-});
-
-app.get('/smartparking', (req, res) => {
-    return res.render('smartparking');
-});
-
-app.get('/wastealert', (req, res) => {
-    return res.render('wastealert');
-});
-
-app.get('/weatherprediction', (req, res) => {
-    return res.render('weatherprediction');
-});
-
-app.get('/windandrain', (req, res) => {
-    return res.render('windandrain');
-});
-
-// API routes
-app.post('/send-alert-email', async (req, res) => {
     try {
-        const alertData = req.body;
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_RECIPIENT, // Configure recipient email
-            subject: `Air Quality Alert - ${alertData.airQuality} AQI (${alertData.aqi})`,
-            html: getEmailContent(alertData)
-        };
-
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: 'Alert email sent successfully' });
+        const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+        req.session.user = userCredential.user;
+        return res.redirect('/nagarnetra');
     } catch (error) {
-        console.error('Error sending email:', error);
-        res.status(500).json({ message: 'Failed to send alert email' });
+        return res.render('register', { errorMessage: error.message });
     }
 });
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+        req.session.user = userCredential.user;
+        return res.redirect('/nagarnetra');
+    } catch (error) {
+        return res.render('login', { errorMessage: 'Invalid Email or Password' });
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/');
+});
+
+// Protected route middleware
+const requireAuth = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect('/');
+    }
+    next();
+};
+
+// Main Application Routes
+app.get('/nagarnetra', requireAuth, (req, res) => res.render('nagarnetra'));
+app.get('/environmentalmonitoring', requireAuth, (req, res) => res.render('environmentalmonitoring'));
+app.get('/maintenance', requireAuth, (req, res) => res.render('maintenance'));
+app.get('/aqi', requireAuth, (req, res) => res.render('aqi', { googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY }));
+app.get('/urbantrafficmanagement', requireAuth, (req, res) => res.render('urbantrafficmanagement'));
+app.get('/publicsafety', requireAuth, (req, res) => res.render('publicsafety'));
+app.get('/surveillance', requireAuth, (req, res) => res.render('surveillance'));
+app.get('/adaptivetraffic', requireAuth, (req, res) => res.render('adaptivetraffic'));
+app.get('/dynamiclane', requireAuth, (req, res) => res.render('dynamiclane'));
+app.get('/smartparking', requireAuth, (req, res) => res.render('smartparking'));
+app.get('/wastealert', requireAuth, (req, res) => res.render('wastealert'));
+app.get('/weatherprediction', requireAuth, (req, res) => res.render('weatherprediction'));
+app.get('/windandrain', requireAuth, (req, res) => res.render('windandrain'));
 
 // Start server
 app.listen(PORT, () => {
